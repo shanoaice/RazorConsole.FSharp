@@ -25,7 +25,7 @@
     <PackageReference Include="Unquote" Version="7.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="10.0.14" />
     <ProjectReference Include="../src/RazorConsole.FSharp/RazorConsole.FSharp.fsproj" />
-    <ProjectReference Include="../src/RazorConsole.Elmish.fsproj" />
+    <ProjectReference Include="../src/RazorConsole.Elmish/RazorConsole.Elmish.fsproj" />
   </ItemGroup>
 
 </Project>

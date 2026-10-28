@@ -5,10 +5,8 @@
     <File Path="docs/research/ranvier_elmish_feasibility_study.md" />
     <File Path="docs/reference/View.fs" />
   </Folder>
-  <Folder Name="/test/">
-    <Project Path="test/RazorConsole.Elmish.Test.fsproj" />
-  </Folder>
+  <Project Path="test/RazorConsole.FSharp.Test.fsproj" />
   <Project Path="benchmarks/RazorConsole.Elmish.Benchmarks.fsproj" />
   <Project Path="src/RazorConsole.FSharp/RazorConsole.FSharp.fsproj" />
-  <Project Path="src/RazorConsole.Elmish.fsproj" />
+  <Project Path="src/RazorConsole.Elmish/RazorConsole.Elmish.fsproj" />
 </Solution>
