@@ -7,5 +7,6 @@
     <Project Path="test/RazorConsole.Elmish.Test.fsproj" />
   </Folder>
   <Project Path="benchmarks/RazorConsole.Elmish.Benchmarks.fsproj" />
+  <Project Path="src/RazorConsole.FSharp/RazorConsole.FSharp.fsproj" />
   <Project Path="src/RazorConsole.Elmish.fsproj" />
 </Solution>

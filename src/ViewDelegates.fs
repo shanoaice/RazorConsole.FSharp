@@ -1,7 +1,7 @@
 namespace RazorConsole.Elmish
 
-open Microsoft.AspNetCore.Components.Rendering
+open RazorConsole.FSharp
 
-type Attr = delegate of receiver: obj * builder: RenderTreeBuilder * sequence: int -> int
+type Attr = RazorConsole.FSharp.Attr
 
-type Node = delegate of receiver: obj * builder: RenderTreeBuilder * sequence: int -> int
+type Node = RazorConsole.FSharp.Node

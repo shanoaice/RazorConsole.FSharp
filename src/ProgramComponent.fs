@@ -1,35 +1,17 @@
 namespace RazorConsole.Elmish
 
 open System.Threading.Tasks
-open Microsoft.AspNetCore.Components
 open Elmish
+open RazorConsole.FSharp
 
 [<AbstractClass>]
 type ProgramComponent<'model, 'msg>() =
-    inherit ComponentBase()
-
-    let mutable _currentView: Node option = None
-    let mutable _currentModel: 'model option = None
-    let mutable _elmishDispatch: Dispatch<'msg> = fun _ -> ()
+    inherit MvuComponentBase<'model, 'msg>()
 
     let mutable _mappedProgram: Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node> option =
         None
 
     abstract Program: Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>
-
-    abstract ShouldRender: oldModel: 'model * newModel: 'model -> bool
-
-    default this.ShouldRender(oldModel, newModel) =
-        not (obj.ReferenceEquals(oldModel, newModel))
-
-    member this.Dispatch: 'msg -> unit = fun msg -> _elmishDispatch msg
-
-    member private this._StateHasChanged() = base.StateHasChanged()
-
-    member private this.RequestRender() =
-        this.InvokeAsync this._StateHasChanged |> ignore
-
-    member private this._InvokeAsync(action) = this.InvokeAsync action
 
     override this.OnInitialized() =
         let initModel, initCmd = Program.init this.Program <| this
@@ -37,8 +19,7 @@ type ProgramComponent<'model, 'msg>() =
         let view = Program.view this.Program <| initModel <| fun msg -> this.Dispatch msg
 
         let extractDispatch (dispatch: Dispatch<'msg>) =
-            _elmishDispatch <- dispatch
-            ()
+            this.SetDispatch dispatch
 
         let initCmd = extractDispatch :: initCmd
 
@@ -46,28 +27,18 @@ type ProgramComponent<'model, 'msg>() =
 
         let mapSetState _ =
             fun model dispatch ->
-                if this.ShouldRender(_currentModel.Value, model) then
-                    _currentView <- Some(Program.view this.Program <| model <| dispatch)
-                    _currentModel <- Some model
-                    this.RequestRender()
-                else
-                    _currentModel <- Some model
+                this.UpdateState(model, fun m -> Program.view this.Program <| m <| dispatch)
 
-        _currentView <- Some view
-        _currentModel <- Some initModel
+        this.SetInitialState(initModel, view)
 
         _mappedProgram <- Some(Program.map mapInit id id mapSetState id id this.Program)
         ()
-
-    override this.BuildRenderTree(builder) =
-        _currentView
-        |> Option.iter (fun (view: Node) -> view.Invoke(this, builder, 0) |> ignore)
 
     override this.OnAfterRenderAsync(firstRender) =
         if firstRender then
             let syncDispatch (dispatch) =
                 fun msg ->
-                    this._InvokeAsync (fun () ->
+                    this.InvokeOnDispatcher(fun () ->
                         dispatch msg
                         Task.CompletedTask)
                     |> ignore
