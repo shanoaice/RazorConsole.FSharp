@@ -1,5 +1,6 @@
 module RazorConsole.Elmish.Test.ProgramComponentTests
 
+open System
 open System.Threading.Tasks
 open Xunit
 open Swensen.Unquote
@@ -180,4 +181,18 @@ let ``Concurrent dispatches from multiple background threads are synchronized`` 
     let text = firstText (renderer.GetFrames(compId))
     let expected = $"Counter: {totalDispatches}"
     test <@ text = expected @>
+}
+
+[<Fact>]
+let ``Passing null context to InitializeMvu throws ArgumentNullException`` () =
+    let comp = CounterComponent(0)
+    raises<ArgumentNullException> <@ comp.InitializeMvu(Unchecked.defaultof<_>) @>
+
+[<Fact>]
+let ``Calling InitializeMvu after component is initialized throws InvalidOperationException`` () = task {
+    use renderer = new TestRenderer()
+    let comp = CounterComponent(0)
+    let! _ = renderer.MountComponentAsync(comp)
+
+    raises<InvalidOperationException> <@ comp.InitializeMvu(Unchecked.defaultof<_>) @>
 }

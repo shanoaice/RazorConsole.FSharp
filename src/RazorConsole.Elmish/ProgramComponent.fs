@@ -1,5 +1,6 @@
 namespace RazorConsole.Elmish
 
+open System
 open System.Threading.Tasks
 open Elmish
 open RazorConsole.FSharp
@@ -13,13 +14,17 @@ type ProgramComponent<'model, 'msg>() =
 
     abstract Program: Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
-    override this.OnInitialized() =
+    override this.InitializeMvu(context) =
+        if _mappedProgram.IsSome then
+            invalidOp "ProgramComponent has already been initialized."
+        ArgumentNullException.ThrowIfNull(context, nameof context)
+
         let initModel, initCmd = Program.init this.Program <| this
 
         let view = Program.view this.Program <| initModel <| fun msg -> this.Dispatch msg
 
         let extractDispatch (dispatch: Dispatch<'msg>) =
-            this.SetDispatch dispatch
+            context.SetDispatch dispatch
 
         let initCmd = extractDispatch :: initCmd
 

@@ -1,9 +1,26 @@
 namespace RazorConsole.FSharp
 
 open System
+open System.Threading
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Rendering
+
+/// <summary>
+/// Initialization context passed to <see cref="MvuComponentBase{TModel, TMsg}.InitializeMvu"/>,
+/// granting derived components the capability to configure message dispatch.
+/// </summary>
+type MvuInitContext<'msg> internal (setDispatch: ('msg -> unit) -> unit) =
+    let mutable consumed = 0
+
+    /// <summary>
+    /// Configures the dispatch delegate for this component. Can only be invoked once.
+    /// </summary>
+    member _.SetDispatch(dispatch: 'msg -> unit) =
+        ArgumentNullException.ThrowIfNull(dispatch, nameof dispatch)
+        if Interlocked.CompareExchange(&consumed, 1, 0) <> 0 then
+            invalidOp "Dispatch delegate has already been configured on this component."
+        setDispatch dispatch
 
 /// <summary>
 /// Abstract base class connecting MVU (Model-View-Update) and reactive loops
@@ -16,6 +33,12 @@ type MvuComponentBase<'model, 'msg>() =
     let mutable currentView: Node option = None
     let mutable currentModel: 'model option = None
     let mutable dispatchFunc: 'msg -> unit = fun _ -> ()
+    let mutable dispatchConfigured = 0
+
+    let configureDispatch (dispatch: 'msg -> unit) =
+        if Interlocked.CompareExchange(&dispatchConfigured, 1, 0) <> 0 then
+            invalidOp "Dispatch delegate has already been configured on this component."
+        dispatchFunc <- dispatch
 
     /// <summary>
     /// Gets the current evaluated model, if initialized.
@@ -37,15 +60,18 @@ type MvuComponentBase<'model, 'msg>() =
         not (obj.ReferenceEquals(oldModel, newModel))
 
     /// <summary>
+    /// Lifecycle hook called during component initialization for subclasses
+    /// to configure dispatch delegates and bindings.
+    /// </summary>
+    abstract member InitializeMvu: context: MvuInitContext<'msg> -> unit
+
+    default _.InitializeMvu(context) =
+        ArgumentNullException.ThrowIfNull(context, nameof context)
+
+    /// <summary>
     /// Safe message dispatch entry point.
     /// </summary>
     member _.Dispatch: 'msg -> unit = fun msg -> dispatchFunc msg
-
-    /// <summary>
-    /// Sets or updates the internal dispatch delegate.
-    /// </summary>
-    member _.SetDispatch(dispatch: 'msg -> unit) =
-        dispatchFunc <- dispatch
 
     /// <summary>
     /// Sets the initial model and view during component initialization.
@@ -54,8 +80,12 @@ type MvuComponentBase<'model, 'msg>() =
         currentModel <- Some model
         currentView <- Some view
         match dispatch with
-        | Some d -> dispatchFunc <- d
+        | Some d -> configureDispatch d
         | None -> ()
+
+    override this.OnInitialized() =
+        base.OnInitialized()
+        this.InitializeMvu(MvuInitContext(configureDispatch))
 
     member private _._StateHasChanged() = base.StateHasChanged()
 

@@ -1,5 +1,6 @@
 module RazorConsole.Elmish.Test.MvuComponentBaseTests
 
+open System
 open System.Threading.Tasks
 open Xunit
 open Swensen.Unquote
@@ -68,6 +69,31 @@ type CustomEqualityMvuComponent(initialCount: int) =
                 | SetTitle t ->
                     let newModel = { this.CurrentModel.Value with Title = t }
                     this.UpdateState(newModel, view)
+        )
+
+type HookInitializedMvuComponent(initialCount: int) =
+    inherit MvuComponentBase<SimpleModel, SimpleMsg>()
+
+    let mutable capturedContext: MvuInitContext<SimpleMsg> option = None
+    member _.CapturedContext = capturedContext
+
+    override this.InitializeMvu(context) =
+        capturedContext <- Some context
+        let initModel = { Count = initialCount; Title = "HookCounter" }
+        let view m =
+            Node(fun _ builder seq ->
+                builder.AddContent(seq, $"{m.Title}: {m.Count}")
+                seq + 1)
+
+        this.SetInitialState(initModel, view initModel)
+        context.SetDispatch(fun msg ->
+            match msg with
+            | Increment ->
+                let newModel = { this.CurrentModel.Value with Count = this.CurrentModel.Value.Count + 1 }
+                this.UpdateState(newModel, view)
+            | SetTitle t ->
+                let newModel = { this.CurrentModel.Value with Title = t }
+                this.UpdateState(newModel, view)
         )
 
 let private firstText (frames: ArrayRange<RenderTreeFrame>) =
@@ -140,4 +166,43 @@ let ``ShouldRender suppression prevents view re-evaluation and re-rendering`` ()
     test <@ countAfterIncrement = 1 @>
     test <@ callsAfterIncrement = 2 @>
     test <@ text = "Count: 1" @>
+}
+
+[<Fact>]
+let ``InitializeMvu capability token configures dispatch and updates state`` () = task {
+    use renderer = new TestRenderer()
+    let comp = HookInitializedMvuComponent(20)
+    let! compId = renderer.MountComponentAsync(comp)
+
+    let frames = renderer.GetFrames(compId)
+    let text = firstText frames
+    test <@ text = "HookCounter: 20" @>
+
+    comp.Dispatch(Increment)
+    do! renderer.WaitForQuiescenceAsync()
+
+    let updatedFrames = renderer.GetFrames(compId)
+    let updatedText = firstText updatedFrames
+    test <@ updatedText = "HookCounter: 21" @>
+    test <@ comp.CurrentModel = Some { Count = 21; Title = "HookCounter" } @>
+}
+
+[<Fact>]
+let ``Calling SetDispatch twice on MvuInitContext throws InvalidOperationException`` () = task {
+    use renderer = new TestRenderer()
+    let comp = HookInitializedMvuComponent(1)
+    let! _ = renderer.MountComponentAsync(comp)
+
+    let context = comp.CapturedContext.Value
+    raises<InvalidOperationException> <@ context.SetDispatch(fun _ -> ()) @>
+}
+
+[<Fact>]
+let ``Setting dispatch via SetInitialState after it was configured throws InvalidOperationException`` () = task {
+    use renderer = new TestRenderer()
+    let comp = HookInitializedMvuComponent(1)
+    let! _ = renderer.MountComponentAsync(comp)
+
+    let dummyView = Node(fun _ b s -> s)
+    raises<InvalidOperationException> <@ comp.SetInitialState({ Count = 0; Title = "" }, dummyView, fun _ -> ()) @>
 }
