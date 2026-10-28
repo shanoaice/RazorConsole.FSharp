@@ -3,6 +3,9 @@
     <File Path="docs/research/elmish_razorconsole_architecture.md" />
     <File Path="docs/research/implementation_guide.md" />
   </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/RazorConsole.Elmish.Test.fsproj" />
+  </Folder>
   <Project Path="benchmarks/RazorConsole.Elmish.Benchmarks.fsproj" />
   <Project Path="src/RazorConsole.Elmish.fsproj" />
 </Solution>
