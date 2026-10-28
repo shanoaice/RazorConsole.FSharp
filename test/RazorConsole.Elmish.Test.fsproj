@@ -14,6 +14,7 @@
   <ItemGroup>
     <Compile Include="TestRenderer.fs" />
     <Compile Include="MvuComponentBaseTests.fs" />
+    <Compile Include="ViewCombinatorTests.fs" />
     <Compile Include="ProgramComponentTests.fs" />
   </ItemGroup>
 

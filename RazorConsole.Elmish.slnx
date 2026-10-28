@@ -2,6 +2,8 @@
   <Folder Name="/docs/">
     <File Path="docs/research/elmish_razorconsole_architecture.md" />
     <File Path="docs/research/implementation_guide.md" />
+    <File Path="docs/research/ranvier_elmish_feasibility_study.md" />
+    <File Path="docs/reference/View.fs" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/RazorConsole.Elmish.Test.fsproj" />
