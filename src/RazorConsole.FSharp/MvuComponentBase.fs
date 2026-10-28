@@ -20,12 +20,12 @@ type MvuComponentBase<'model, 'msg>() =
     /// <summary>
     /// Gets the current evaluated model, if initialized.
     /// </summary>
-    member this.CurrentModel: 'model option = currentModel
+    member _.CurrentModel: 'model option = currentModel
 
     /// <summary>
     /// Gets the current evaluated view node, if initialized.
     /// </summary>
-    member this.CurrentView: Node option = currentView
+    member _.CurrentView: Node option = currentView
 
     /// <summary>
     /// Predicate controlling whether a model change triggers a view re-evaluation and re-render.
@@ -33,31 +33,31 @@ type MvuComponentBase<'model, 'msg>() =
     /// </summary>
     abstract ShouldRender: oldModel: 'model * newModel: 'model -> bool
 
-    default this.ShouldRender(oldModel, newModel) =
+    default _.ShouldRender(oldModel, newModel) =
         not (obj.ReferenceEquals(oldModel, newModel))
 
     /// <summary>
     /// Safe message dispatch entry point.
     /// </summary>
-    member this.Dispatch: 'msg -> unit = fun msg -> dispatchFunc msg
+    member _.Dispatch: 'msg -> unit = fun msg -> dispatchFunc msg
 
     /// <summary>
     /// Sets or updates the internal dispatch delegate.
     /// </summary>
-    member this.SetDispatch(dispatch: 'msg -> unit) =
+    member _.SetDispatch(dispatch: 'msg -> unit) =
         dispatchFunc <- dispatch
 
     /// <summary>
     /// Sets the initial model and view during component initialization.
     /// </summary>
-    member this.SetInitialState(model: 'model, view: Node, ?dispatch: 'msg -> unit) =
+    member _.SetInitialState(model: 'model, view: Node, ?dispatch: 'msg -> unit) =
         currentModel <- Some model
         currentView <- Some view
         match dispatch with
         | Some d -> dispatchFunc <- d
         | None -> ()
 
-    member private this._StateHasChanged() = base.StateHasChanged()
+    member private _._StateHasChanged() = base.StateHasChanged()
 
     /// <summary>
     /// Requests a UI render pass marshaled to Blazor's Dispatcher.
